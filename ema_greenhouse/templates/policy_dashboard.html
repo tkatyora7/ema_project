@@ -1,0 +1,303 @@
+{% include 'styles.html' %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMA - Regional Emissions Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Blue sidebar -->
+       <div class="hidden md:flex md:flex-shrink-0">
+    <div class="flex flex-col w-64 bg-blue-800 text-white">
+        <!-- Enhanced Header -->
+        <div class="flex flex-col px-4 py-4 bg-gradient-to-b from-blue-900 to-blue-800 shadow-inner">
+            <div class="flex items-center">
+                <img src="{% static 'imagies/logo2.jpeg' %}" alt="EMA Logo" 
+                     class="h-10 w-10 rounded-lg shadow-sm ring-1 ring-blue-400/20" />
+                <div class="ml-3">
+                    <h1 class="text-xl font-bold leading-tight">EMA SYSTEM</h1>
+                    <p class="text-xs font-medium text-blue-100 uppercase tracking-wider mt-0.5">
+                        Policy Dashboard
+                    </p>
+                </div>
+            </div>
+            <div class="mt-3 flex justify-between items-center">
+                <span class="px-2 py-1 bg-blue-700/40 rounded-full text-xs font-medium text-blue-100 flex items-center">
+                    <span class="w-2 h-2 rounded-full bg-green-400 mr-1.5 animate-pulse"></span>
+                    Live Monitoring
+                </span>
+                <span class="text-blue-100 text-xs font-medium">
+                    {% now "M j, Y" %}
+                </span>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+            <a href="#" class="flex items-center px-3 py-2 text-sm font-medium rounded-md bg-blue-700/90 group">
+                <svg class="w-5 h-5 text-blue-300 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                <span class="ml-3">Regional Emissions</span>
+            </a>
+            <!-- Additional menu items can be added here -->
+        </nav>
+    </div>
+</div>
+
+        <!-- Main Content -->
+        <div class="flex flex-col flex-1 overflow-hidden">
+            <header class="flex items-center justify-between px-6 py-4 bg-white border-b">
+                <div class="flex items-center">
+                    <button class="md:hidden text-gray-500 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <h1 class="ml-4 text-xl font-semibold text-gray-800">Regional Greenhouse Gas Emissions</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3 border-l border-gray-200 pl-4">
+                        <div class="text-right">
+                            <p class="text-sm font-medium text-gray-700">Policy Analyst</p>
+                            <p class="text-xs text-gray-500">{{ user.email }}</p>
+                        </div>
+                        <form method="post" action="{% url 'logout' %}" class="ml-2">
+                            {% csrf_token %}
+                            <button type="submit" class="text-sm text-blue-600 hover:text-blue-800 hover:bg-gray-100 px-2 py-1 rounded">
+                                Logout
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="flex-1 overflow-auto p-6">
+                <div class="max-w-6xl mx-auto">
+                    <div class="bg-white p-6 rounded-xl shadow mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-semibold text-gray-800">Regional Emissions (Last 7 Days)</h2>
+                            <div class="text-sm text-gray-500">
+                                <span id="currentDate"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label for="gas-select" class="block text-sm font-medium text-gray-700 mb-1">Select Gas:</label>
+                            <select id="gas-select" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 py-2 px-3">
+                                <option value="co2">Carbon Dioxide (CO₂)</option>
+                                <option value="ch4">Methane (CH₄)</option>
+                                <option value="no2">Nitrogen Dioxide (NO₂)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="h-96">
+                            <canvas id="regionalEmissionsChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-2">Environmental Management Agency Contact</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                            <div>
+                                <p><span class="font-medium">Email:</span> regional-data@ema.gov.zw</p>
+                                <p><span class="font-medium">Phone:</span> +263 776 789 012</p>
+                            </div>
+                            <div>
+                                <p><span class="font-medium">Address:</span> 123 Mbuya Nehanda, Harare</p>
+                                <p><span class="font-medium">Regional Data Inquiries:</span> regions@ema.gov.zw</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set current date
+        const today = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('currentDate').textContent = today.toLocaleDateString('en-US', options);
+        
+        // Generate dates for last 7 days
+        const dates = [];
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            dates.push(date.toLocaleDateString('en-US', { weekday: 'short' }));
+        }
+
+        // Regional emissions data
+        const regionData = {
+            co2: {
+                labels: dates,
+                datasets: [
+                    {
+                        label: 'Harare CO₂ (ppm)',
+                        data: [450, 445, 460, 455, 470, 465, 480],
+                        borderColor: '#3B82F6',  // Blue
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.3,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Masvingo CO₂ (ppm)',
+                        data: [420, 415, 430, 425, 440, 435, 450],
+                        borderColor: '#10B981',  // Green
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.3,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Bulawayo CO₂ (ppm)',
+                        data: [400, 395, 410, 405, 420, 415, 430],
+                        borderColor: '#F59E0B',  // Orange
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.3,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Mutare CO₂ (ppm)',
+                        data: [380, 375, 390, 385, 400, 395, 410],
+                        borderColor: '#8B5CF6',  // Purple
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.3,
+                        borderWidth: 2
+                    }
+                ]
+            },
+            ch4: {
+                labels: dates,
+                datasets: [
+                    {
+                        label: 'Harare CH₄ (ppm)',
+                        data: [1.9, 1.85, 2.0, 2.1, 2.2, 2.15, 2.05],
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.3,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Masvingo CH₄ (ppm)',
+                        data: [1.7, 1.65, 1.8, 1.9, 2.0, 1.95, 1.85],
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.3,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Bulawayo CH₄ (ppm)',
+                        data: [1.5, 1.45, 1.6, 1.7, 1.8, 1.75, 1.65],
+                        borderColor: '#F59E0B',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.3,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Mutare CH₄ (ppm)',
+                        data: [1.3, 1.25, 1.4, 1.5, 1.6, 1.55, 1.45],
+                        borderColor: '#8B5CF6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.3,
+                        borderWidth: 2
+                    }
+                ]
+            },
+            no2: {
+                labels: dates,
+                datasets: [
+                    {
+                        label: 'Harare NO₂ (ppm)',
+                        data: [0.9, 0.85, 1.0, 1.1, 1.2, 1.15, 1.05],
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.3,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Masvingo NO₂ (ppm)',
+                        data: [0.8, 0.75, 0.9, 1.0, 1.1, 1.05, 0.95],
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.3,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Bulawayo NO₂ (ppm)',
+                        data: [0.7, 0.65, 0.8, 0.9, 1.0, 0.95, 0.85],
+                        borderColor: '#F59E0B',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.3,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Mutare NO₂ (ppm)',
+                        data: [0.6, 0.55, 0.7, 0.8, 0.9, 0.85, 0.75],
+                        borderColor: '#8B5CF6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.3,
+                        borderWidth: 2
+                    }
+                ]
+            }
+        };
+
+        // Initialize chart
+        const ctx = document.getElementById('regionalEmissionsChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: regionData.co2,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        title: {
+                            display: true,
+                            text: 'Concentration (ppm)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Day of Week'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.parsed.y} ppm`;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 20
+                        }
+                    }
+                }
+            }
+        });
+
+        // Handle gas selection change
+        document.getElementById('gas-select').addEventListener('change', function() {
+            const gas = this.value;
+            chart.data = regionData[gas];
+            chart.update();
+        });
+    });
+    </script>
+</body>
+</html>

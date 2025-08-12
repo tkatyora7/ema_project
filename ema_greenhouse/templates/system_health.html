@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="flex h-screen bg-gray-50">
+  
+  <div class="flex-1 overflow-auto">
+        <!-- Header -->
+        <header class="flex items-center justify-between px-6 py-4 bg-white border-b">
+            <h1 class="text-2xl font-bold text-gray-800">System Configuration and Report</h1>
+            <span class="text-sm text-gray-500">Last updated: {% now "DATETIME_FORMAT" %}</span>
+        </header>
+
+        <!-- Main Content -->
+        <main class="p-6 bg-gray-50">
+            <!-- Threshold Configuration Card -->
+            <div class="bg-white p-6 rounded-xl shadow mb-6 border-l-4 border-emerald-500">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800">Global Threshold Settings</h2>
+                    <button class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                        Update Thresholds
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <!-- CO₂ Threshold -->
+                    <div class="border rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">CO₂ Threshold</p>
+                                <p class="mt-1 text-2xl font-semibold text-gray-900">
+                                    {{ thresholds.co2_threshold }} <span class="text-sm">ppm</span>
+                                </p>
+                            </div>
+                            <div class="p-2 rounded-full bg-blue-100 text-blue-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">Safe range: 400-1000 ppm</p>
+                    </div>
+                    
+                    <!-- CH₄ Threshold -->
+                    <div class="border rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">CH₄ Threshold</p>
+                                <p class="mt-1 text-2xl font-semibold text-gray-900">
+                                    {{ thresholds.ch4_threshold }} <span class="text-sm">ppm</span>
+                                </p>
+                            </div>
+                            <div class="p-2 rounded-full bg-orange-100 text-orange-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">Safe range: 0.5-50 ppm</p>
+                    </div>
+                    
+                    <!-- NO₂ Threshold -->
+                    <div class="border rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">NO₂ Threshold</p>
+                                <p class="mt-1 text-2xl font-semibold text-gray-900">
+                                    {{ thresholds.no2_threshold }} <span class="text-sm">ppm</span>
+                                </p>
+                            </div>
+                            <div class="p-2 rounded-full bg-purple-100 text-purple-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">Safe range: 0.05-5 ppm</p>
+                    </div>
+                    
+                    <!-- Temperature Threshold -->
+                    <div class="border rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Temperature</p>
+                                <p class="mt-1 text-2xl font-semibold text-gray-900">
+                                    {{ thresholds.temperature }} <span class="text-sm">°C</span>
+                                </p>
+                            </div>
+                            <div class="p-2 rounded-full bg-red-100 text-red-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">Optimal range: 18-28°C</p>
+                    </div>
+                    
+                    <!-- Humidity Threshold -->
+                    <div class="border rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Humidity</p>
+                                <p class="mt-1 text-2xl font-semibold text-gray-900">
+                                    {{ thresholds.humidity }} <span class="text-sm">%</span>
+                                </p>
+                            </div>
+                            <div class="p-2 rounded-full bg-cyan-100 text-cyan-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">Optimal range: 40-70%</p>
+                    </div>
+                </div>
+            </div>
+
+   <!-- System Status Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <!-- Online Systems -->
+    <div class="bg-white p-6 rounded-xl shadow border-l-4 border-green-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-500">Online Systems</p>
+                <p class="mt-1 text-3xl font-semibold text-gray-900">{{ online_count }}</p>
+            </div>
+            <div class="p-3 rounded-full bg-green-100 text-green-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+                </svg>
+            </div>
+        </div>
+       
+    </div>
+
+    <!-- Offline Systems -->
+    <div class="bg-white p-6 rounded-xl shadow border-l-4 border-red-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-500">Offline Systems</p>
+                <p class="mt-1 text-3xl font-semibold text-gray-900">{{ offline_count }}</p>
+            </div>
+            <div class="p-3 rounded-full bg-red-100 text-red-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+            </div>
+        </div>
+      
+    </div>
+
+  
+</div>
+
+<div class="bg-white rounded-xl shadow overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <h2 class="text-lg font-semibold text-gray-800">Greenhouse Systems Status</h2>
+        
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">System ID</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Greenhouse</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location/Region</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Online</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for system in systems %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        #{{ system.id }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="font-medium text-gray-900">{{ system.name }}</div>
+                        <div class="text-xs text-gray-500">{{ system.greenhouse_type }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ system.location }}</div>
+                        <div class="text-xs text-gray-500">{{ system.region }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ system.owner_email }}<br>
+                        <span class="text-xs">{{ system.owner_phone }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ system.last_online|date:"M j, H:i" }}</div>
+                        <div class="text-xs text-gray-500">{{ system.last_online|timesince }} ago</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if system.is_online %}
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Online
+                        </span>
+                        {% else %}
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                            Offline
+                        </span>
+                        {% endif %}
+                        <div class="text-xs mt-1">Uptime: {{ system.uptime }}%</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="#" class="text-blue-600 hover:text-blue-900 mr-2">Details</a>
+                        <a href="#" class="text-emerald-600 hover:text-emerald-900">Notify</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+  
+</div>
+ <br> <br> <br>
+           
+        </main>
+    </div>
+</div>
+
+
+{% endblock %}

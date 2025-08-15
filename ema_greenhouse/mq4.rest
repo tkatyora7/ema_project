@@ -1,0 +1,9 @@
+
+POST http://127.0.0.1:8000/mq4_api/
+Content-Type: application/json
+
+{
+    "esp32_id": "3C:71:BF:49:2F:8A",
+   "ch4": 1850
+   
+}

@@ -15,6 +15,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from .models import Greenhouse, SensorData, Thresholds, Alert
+from django.db.models import Avg
+from datetime import datetime, timedelta
 
 
 
@@ -56,9 +58,100 @@ def signout(request):
     messages.success(request,'Logged Out Succefully.')
     return redirect('login')
 
+
+
 @login_required
 def ema_dashboard(request):
-    return render(request, 'ema_dashboard.html')
+
+    averages = SensorData.objects.aggregate(
+        avg_co2=Avg('co2'),
+        avg_ch4=Avg('ch4'),
+        avg_nox=Avg('nox'),
+        avg_temp=Avg('temperature'),
+        avg_humidity=Avg('humidity')
+    )
+    
+    selected_greenhouse = None
+    
+   
+    if 'q' in request.GET:
+        search_query = request.GET.get('q', '').strip()
+        
+      
+        if search_query:
+            selected_greenhouse = Greenhouse.objects.filter(
+                models.Q(esp32_id__icontains=search_query) |
+                models.Q(location__icontains=search_query)
+            ).first()
+            
+            if selected_greenhouse:
+               
+                greenhouse_avg = SensorData.objects.filter(
+                    greenhouse=selected_greenhouse
+                ).aggregate(
+                    avg_co2=Avg('co2'),
+                    avg_ch4=Avg('ch4'),
+                    avg_nox=Avg('nox'),
+                    avg_temp=Avg('temperature'),
+                    avg_humidity=Avg('humidity')
+                )
+                
+              
+                selected_greenhouse.avg_co2 = greenhouse_avg['avg_co2']
+                selected_greenhouse.avg_ch4 = greenhouse_avg['avg_ch4']
+                selected_greenhouse.avg_nox = greenhouse_avg['avg_nox']
+                selected_greenhouse.avg_temp = greenhouse_avg['avg_temp']
+                selected_greenhouse.avg_humidity = greenhouse_avg['avg_humidity']
+    recent_readings = SensorData.objects.select_related('greenhouse').order_by('-timestamp')[:5]
+    all_readings = SensorData.objects.select_related('greenhouse').order_by('-timestamp')
+    alert= Alert.objects.all()
+    
+    
+    alert_counts = {
+        'critical': Alert.objects.filter(status='critical', resolved=False).count(),
+        'warning': Alert.objects.filter(status='warning', resolved=False).count(),
+        'total': Alert.objects.filter(resolved=False).count()
+    }
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=7)
+    
+    # Get daily averages
+    daily_data = SensorData.objects.filter(
+        timestamp__gte=start_date
+    ).extra({
+        'date': "date(timestamp)"
+    }).values('date').annotate(
+        avg_co2=Avg('co2'),
+        avg_ch4=Avg('ch4'),
+        avg_nox=Avg('nox')
+    ).order_by('date')
+    
+    # Prepare chart data with pre-formatted dates
+    chart_data = {
+        'dates': [datetime.strptime(day['date'], '%Y-%m-%d').strftime('%a %m/%d') for day in daily_data],
+        'co2': [float(day['avg_co2']) for day in daily_data],
+        'ch4': [float(day['avg_ch4']) for day in daily_data],
+        'nox': [float(day['avg_nox']) for day in daily_data]
+    }
+    
+    
+    
+
+    context = {
+        'avg_co2': averages['avg_co2'],
+        'avg_ch4': averages['avg_ch4'],
+        'avg_nox': averages['avg_nox'],
+        'avg_temp': averages['avg_temp'],
+        'avg_humidity': averages['avg_humidity'],
+        'selected_greenhouse': selected_greenhouse,
+        'recent_readings': recent_readings,
+        'all_readings': all_readings,
+        'alert_counts': alert_counts,
+        "alerts":alert,
+        'chart_data_json': JsonResponse(chart_data).content.decode('utf-8'),
+    }
+    
+    return render(request, 'ema_dashboard.html', context)
 
 @login_required
 def policy_dashboard(request):
@@ -66,6 +159,7 @@ def policy_dashboard(request):
 
 def system_health(request):
     systems = Greenhouse.objects.all()
+    thresholds= Thresholds.objects.last()
     systems_count = systems.count()
     active_systems_count = 0
     inactive_systems_count = systems_count - active_systems_count
@@ -74,7 +168,8 @@ def system_health(request):
         'systems': systems,
         'systems_count': systems_count,
         'active_systems_count': active_systems_count,
-        'inactive_systems_count': inactive_systems_count
+        'inactive_systems_count': inactive_systems_count,
+        "thresholds":thresholds,
     })
 
 

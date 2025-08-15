@@ -155,7 +155,12 @@
 <div class="bg-white rounded-xl shadow overflow-hidden mb-6">
     <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
         <h2 class="text-lg font-semibold text-gray-800">Greenhouse Systems Status</h2>
-        
+        <a href="http://127.0.0.1:8000/admin/main_application/greenhouse/add/" 
+        target="_blank"
+         rel="noopener noreferrer"
+           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+            Add New Greenhouse
+        </a>
     </div>
     
     <div class="overflow-x-auto">
@@ -178,7 +183,7 @@
                         #{{ system.id }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="font-medium text-gray-900">{{ system.name }}</div>
+                        <div class="font-medium text-gray-900">{{ system.esp32_id }}</div>
                         <div class="text-xs text-gray-500">{{ system.greenhouse_type }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
@@ -203,18 +208,14 @@
                             Offline
                         </span>
                         {% endif %}
-                        <div class="text-xs mt-1">Uptime: {{ system.uptime }}%</div>
+                       
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <a href="#" class="text-blue-600 hover:text-blue-900 mr-2">Details</a>
-                        <a href="#" class="text-emerald-600 hover:text-emerald-900">Notify</a>
-                    </td>
+                    
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-  
 </div>
  <br> <br> <br>
            

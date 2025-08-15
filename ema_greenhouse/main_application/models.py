@@ -96,16 +96,16 @@ class Greenhouse(models.Model):
     esp32_id = models.CharField(max_length=50, unique=True) 
     
     def __str__(self):
-        return f"{self.name} ({self.region})"
+        return f"{self.esp32_id} ({self.region})"
 
 class SensorData(models.Model):
     greenhouse = models.ForeignKey(Greenhouse, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
-    co2 = models.FloatField(help_text="CO₂ ppm") 
-    ch4 = models.FloatField(help_text="CH₄ ppm")
-    nox = models.FloatField(help_text="NOₓ ppm")
-    temperature = models.FloatField(help_text="°C")
-    humidity = models.FloatField(help_text="%")
+    co2 = models.FloatField(help_text="CO₂ ppm",null=True,blank=True) 
+    ch4 = models.FloatField(help_text="CH₄ ppm",null=True,blank=True)
+    nox = models.FloatField(help_text="NOₓ ppm",null=True,blank=True)
+    temperature = models.FloatField(help_text="°C",null=True,blank=True)
+    humidity = models.FloatField(help_text="%",null=True,blank=True)
    
     
     class Meta:

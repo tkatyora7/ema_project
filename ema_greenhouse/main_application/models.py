@@ -126,3 +126,6 @@ class Alert(models.Model):
         ('critical', 'Critical')
     ])
     resolved = models.BooleanField(default=False)
+    class Meta:
+        ordering = ['-timestamp']
+

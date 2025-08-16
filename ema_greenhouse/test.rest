@@ -1,9 +1,12 @@
 
-POST http://127.0.0.1:8000/mq135_api/
+POST http://127.0.0.1:8000/sensor_data_api/
 Content-Type: application/json
 
 {
     "esp32_id": "3C:71:BF:49:2F:8A",
-    "co2": 1250,  
-    "nox": 1.8 
+    "temperature": 22.5,
+    "humidity": 60.0,
+    "ch4": 350,
+    "co2": 900,
+    "nox": 50
 }

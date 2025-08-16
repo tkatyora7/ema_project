@@ -135,7 +135,11 @@ def ema_dashboard(request):
     }
     
     
-    
+    if selected_greenhouse:
+        latest_reading = SensorData.objects.filter(greenhouse=selected_greenhouse).order_by('-timestamp').first()
+    else:
+        latest_reading = SensorData.objects.order_by('-timestamp').first()  # latest overall
+
 
     context = {
         'avg_co2': averages['avg_co2'],
@@ -149,6 +153,7 @@ def ema_dashboard(request):
         'alert_counts': alert_counts,
         "alerts":alert,
         'chart_data_json': JsonResponse(chart_data).content.decode('utf-8'),
+        'latest_reading': latest_reading,
     }
     
     return render(request, 'ema_dashboard.html', context)
@@ -181,142 +186,86 @@ def validate_greenhouse(esp32_id):
         return None
 
 def check_thresholds(greenhouse, sensor_type, value, thresholds):
-    alert_data = {
-        'greenhouse': greenhouse,
-        'value': value,
-        'resolved': False
+    sensor_config = {
+        'DHT22_TEMP':  {'field': 'temperature', 'gas_type': 'TEMP', 'multiplier': 1.1},
+        'DHT22_HUMIDITY': {'field': 'humidity', 'gas_type': 'HUMIDITY', 'multiplier': 1.1},
+        'MQ4_CH4':     {'field': 'ch4_threshold', 'gas_type': 'CH4', 'multiplier': 1.5},
+        'MQ135_CO2':   {'field': 'co2_threshold', 'gas_type': 'CO2', 'multiplier': 1.5},
+        'MQ135_NOX':   {'field': 'no2_threshold', 'gas_type': 'NOX', 'multiplier': 1.5},
     }
-    
-    if sensor_type == 'DHT22_TEMP':
-        if value > thresholds.temperature:
-            Alert.objects.create(
-                **alert_data,
-                gas_type='TEMP',
-                threshold=thresholds.temperature,
-                status='critical' if value > thresholds.temperature * 1.1 else 'warning'
-            )
-    
-    elif sensor_type == 'DHT22_HUMIDITY':
-        if value > thresholds.humidity:
-            Alert.objects.create(
-                **alert_data,
-                gas_type='HUMIDITY',
-                threshold=thresholds.humidity,
-                status='critical' if value > thresholds.humidity * 1.1 else 'warning'
-            )
-    
-    elif sensor_type == 'MQ4_CH4':
-        if value > thresholds.ch4_threshold:
-            Alert.objects.create(
-                **alert_data,
-                gas_type='CH4',
-                threshold=thresholds.ch4_threshold,
-                status='critical' if value > thresholds.ch4_threshold * 1.5 else 'warning'
-            )
-    
-    elif sensor_type in ['MQ135_CO2', 'MQ135_NOX']:
-        if sensor_type == 'MQ135_CO2' and value > thresholds.co2_threshold:
-            Alert.objects.create(
-                **alert_data,
-                gas_type='CO2',
-                threshold=thresholds.co2_threshold,
-                status='critical' if value > thresholds.co2_threshold * 1.5 else 'warning'
-            )
-        elif sensor_type == 'MQ135_NOX' and value > thresholds.no2_threshold:
-            Alert.objects.create(
-                **alert_data,
-                gas_type='NOX',
-                threshold=thresholds.no2_threshold,
-                status='critical' if value > thresholds.no2_threshold * 1.5 else 'warning'
-            )
+
+    config = sensor_config.get(sensor_type)
+    if not config:
+        return  
+
+    threshold_value = getattr(thresholds, config['field'])
+    if value > threshold_value:
+        Alert.objects.create(
+            greenhouse=greenhouse,
+            value=value,
+            resolved=False,
+            gas_type=config['gas_type'],
+            threshold=threshold_value,
+            status='critical' if value > threshold_value * config['multiplier'] else 'warning'
+        )
+
 
 @csrf_exempt
 @require_POST
-def dht22_data(request):
+def sensor_data(request):
     try:
         data = json.loads(request.body)
-        required_fields = ['esp32_id', 'temperature', 'humidity']
-        if not all(field in data for field in required_fields):
-            return JsonResponse({'status': 'error', 'message': 'Missing required fields'}, status=400)
-        
-        greenhouse = validate_greenhouse(data['esp32_id'])
-        if not greenhouse:
-            return JsonResponse({'status': 'error', 'message': 'Unauthorized device'}, status=403)
-        
-        thresholds = Thresholds.objects.first() or Thresholds.objects.create()
-        
-        sensor_data = SensorData.objects.create(
-            greenhouse=greenhouse,
-            temperature=data['temperature'],
-            humidity=data['humidity']
-        )
-        
-        check_thresholds(greenhouse, 'DHT22_TEMP', data['temperature'], thresholds)
-        check_thresholds(greenhouse, 'DHT22_HUMIDITY', data['humidity'], thresholds)
-        
-        return JsonResponse({'status': 'Created'})
-    
-    except json.JSONDecodeError:
-        return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+        if 'esp32_id' not in data:
+            return JsonResponse({'status': 'error', 'message': 'Missing esp32_id'}, status=400)
 
-@csrf_exempt
-@require_POST
-def mq4_data(request):
-    try:
-        data = json.loads(request.body)
-        required_fields = ['esp32_id', 'ch4']
-        if not all(field in data for field in required_fields):
-            return JsonResponse({'status': 'error', 'message': 'Missing required fields'}, status=400)
-        
         greenhouse = validate_greenhouse(data['esp32_id'])
         if not greenhouse:
             return JsonResponse({'status': 'error', 'message': 'Unauthorized device'}, status=403)
-        
+
         thresholds = Thresholds.objects.first() or Thresholds.objects.create()
-        
         sensor_data = SensorData.objects.create(
             greenhouse=greenhouse,
-            ch4=data['ch4']
+            temperature=data.get('temperature'),
+            humidity=data.get('humidity'),
+            ch4=data.get('ch4'),
+            co2=data.get('co2'),
+            nox=data.get('nox')
         )
+
         
-        check_thresholds(greenhouse, 'MQ4_CH4', data['ch4'], thresholds)
-        
+        if 'temperature' in data:
+            check_thresholds(greenhouse, 'DHT22_TEMP', data['temperature'], thresholds)
+        if 'humidity' in data:
+            check_thresholds(greenhouse, 'DHT22_HUMIDITY', data['humidity'], thresholds)
+        if 'ch4' in data:
+            check_thresholds(greenhouse, 'MQ4_CH4', data['ch4'], thresholds)
+        if 'co2' in data:
+            check_thresholds(greenhouse, 'MQ135_CO2', data['co2'], thresholds)
+        if 'nox' in data:
+            check_thresholds(greenhouse, 'MQ135_NOX', data['nox'], thresholds)
+
         return JsonResponse({'status': 'success'})
-    
+
     except json.JSONDecodeError:
         return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
+
+
 @csrf_exempt
-@require_POST
-def mq135_data(request):
-    try:
-        data = json.loads(request.body)
-        required_fields = ['esp32_id', 'co2', 'nox']
-        if not all(field in data for field in required_fields):
-            return JsonResponse({'status': 'error', 'message': 'Missing required fields'}, status=400)
+def get_thresholds(request):
+    if request.method == "GET":
+        thresholds = Thresholds.objects.first()
+        if not thresholds:
+            return JsonResponse({'status': 'error', 'message': 'No thresholds set'}, status=404)
         
-        greenhouse = validate_greenhouse(data['esp32_id'])
-        if not greenhouse:
-            return JsonResponse({'status': 'error', 'message': 'Unauthorized device'}, status=403)
-        
-        thresholds = Thresholds.objects.first() or Thresholds.objects.create()
-        
-        sensor_data = SensorData.objects.create(
-            greenhouse=greenhouse,
-            co2=data['co2'],
-            nox=data['nox']
-        )
-        
-        check_thresholds(greenhouse, 'MQ135_CO2', data['co2'], thresholds)
-        check_thresholds(greenhouse, 'MQ135_NOX', data['nox'], thresholds)
-        
-        return JsonResponse({'status': 'success'})
-    
-    except json.JSONDecodeError:
-        return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+        data = {
+            'temperature': thresholds.temperature,
+            'humidity': thresholds.humidity,
+            'ch4': thresholds.ch4_threshold,
+            'co2': thresholds.co2_threshold,
+            'nox': thresholds.no2_threshold
+        }
+        return JsonResponse({'status': 'success', 'thresholds': data})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)

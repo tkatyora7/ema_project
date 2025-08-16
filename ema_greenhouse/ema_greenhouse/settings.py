@@ -27,7 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
-ESP_32_SECRET_KEY= 'xytm56shjn'
+
 
 # Application definition
 
@@ -50,6 +50,7 @@ TAILWIND_APP_NAME = 'main'
 
 CORS_ALLOWED_ORIGINS = [
      "http://esp32.local",
+     
 ]
 
 MIDDLEWARE = [
